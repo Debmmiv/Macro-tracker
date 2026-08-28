@@ -1,20 +1,22 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Food(models.Model):
     name = models.CharField(max_length=100)
-    serving_size_g = models.IntegerField()
+    serving_size = models.CharField(max_length=50)
     calories = models.IntegerField()
-    protein_g = models.DecimalField(max_digits=5, decimal_places=2)
-    carbs_g = models.DecimalField(max_digits=5, decimal_places=2)
-    fats_g = models.DecimalField(max_digits=5, decimal_places=2)
+    protein = models.FloatField()
+    carbs = models.FloatField()
+    fat = models.FloatField()
 
     def __str__(self):
         return self.name
 
 class DailyLog(models.Model):
-    # Connects the log to Django's built-in User model or a custom user setup later
-    user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
-    food = models.ForeignKey(Food, on_delete=models.PROTECT)
-    date = models.DateField()
-    servings_eaten = models.DecimalField(max_digits=5, decimal_places=2)
-    logged_at = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    food = models.ForeignKey(Food, on_delete=models.CASCADE)
+    servings = models.FloatField(default=1.0)
+    date = models.DateField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.food.name} ({self.date})"
