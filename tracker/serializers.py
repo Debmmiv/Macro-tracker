@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Food, DailyLog
+from django.contrib.auth.models import User
 
 class FoodSerializer(serializers.ModelSerializer):
     class Meta:
@@ -12,3 +13,19 @@ class DailyLogSerializer(serializers.ModelSerializer):
         model = DailyLog
         fields = '__all__'
         read_only_fields = ['user']
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']
+
+    def create(self, validated_data):
+        # create_user automatically hashes the password
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data.get('email', ''),
+            password=validated_data['password']
+        )
+        return user
