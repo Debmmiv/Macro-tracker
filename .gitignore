@@ -16,3 +16,7 @@ staticfiles/
  
 # Environment variables (never commit real secrets)
 .env
+# Node / Next.js frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
