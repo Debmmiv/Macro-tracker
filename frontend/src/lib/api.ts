@@ -57,10 +57,55 @@ async function authedGet(path: string) {
   return res.json();
 }
 
+async function authedPost(path: string, body: unknown) {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    throw new Error("Session expired");
+  }
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+  return res.json();
+}
+
 export function getDailySummary(): Promise<DailySummary> {
   return authedGet("/api/logs/summary/");
 }
 
 export function getWeights(): Promise<WeightEntry[]> {
   return authedGet("/api/weights/");
+}
+
+export interface Food {
+  id: number;
+  name: string;
+  serving_size: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export function searchFoods(query: string): Promise<Food[]> {
+  if (!query.trim()) return Promise.resolve([]);
+  return authedGet(`/api/foods/?search=${encodeURIComponent(query)}`);
+}
+
+export function createFood(food: Omit<Food, "id">): Promise<Food> {
+  return authedPost("/api/foods/", food);
+}
+
+export function logFood(foodId: number, servings: number): Promise<unknown> {
+  return authedPost("/api/logs/", { food: foodId, servings });
 }
