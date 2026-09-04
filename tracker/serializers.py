@@ -9,6 +9,11 @@ class FoodSerializer(serializers.ModelSerializer):
 
 
 class DailyLogSerializer(serializers.ModelSerializer):
+    # 'food' stays as a plain writable ID (for POST/PATCH). 'food_detail' is
+    # read-only and nests the full food info, so GET responses are actually
+    # useful to display (name, calories) without a second lookup per entry.
+    food_detail = FoodSerializer(source='food', read_only=True)
+
     class Meta:
         model = DailyLog
         fields = '__all__'

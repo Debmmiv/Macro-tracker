@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getToken, clearToken, getDailySummary, getWeights, DailySummary, WeightEntry } from "@/lib/api";
+import { getToken, clearToken, getDailySummary, getWeights, getTodayLogs, deleteLog, DailySummary, WeightEntry, TodayLogEntry } from "@/lib/api";
 
 function ProgressRing({ label, value, target, unit, color }: { label: string; value: number; target: number | null; unit: string; color: string }) {
   const pct = target ? Math.min(100, Math.round((value / target) * 100)) : 0;
@@ -44,8 +44,19 @@ export default function DashboardPage() {
   const router = useRouter();
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [latestWeight, setLatestWeight] = useState<WeightEntry | null>(null);
+  const [todayLogs, setTodayLogs] = useState<TodayLogEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  function loadDashboard() {
+    return Promise.all([getDailySummary(), getWeights(), getTodayLogs()]).then(
+      ([summaryData, weights, logs]) => {
+        setSummary(summaryData);
+        setLatestWeight(weights[0] ?? null);
+        setTodayLogs(logs);
+      }
+    );
+  }
 
   useEffect(() => {
     if (!getToken()) {
@@ -53,17 +64,24 @@ export default function DashboardPage() {
       return;
     }
 
-    Promise.all([getDailySummary(), getWeights()])
-      .then(([summaryData, weights]) => {
-        setSummary(summaryData);
-        setLatestWeight(weights[0] ?? null);
-      })
+    loadDashboard()
       .catch(() => {
         setError("Couldn't load your data. Try logging in again.");
         router.push("/login");
       })
       .finally(() => setLoading(false));
   }, [router]);
+
+  async function handleDeleteLog(logId: number) {
+    try {
+      await deleteLog(logId);
+      // Re-fetch everything so the rings and totals stay in sync with the
+      // actual remaining logs, rather than trying to subtract locally.
+      await loadDashboard();
+    } catch {
+      setError("Couldn't remove that entry. Try again.");
+    }
+  }
 
   function handleLogout() {
     clearToken();
@@ -94,12 +112,20 @@ export default function DashboardPage() {
             <p className="text-sm text-[#5B6B5D]">Today</p>
             <h1 className="text-xl font-semibold text-[#1C2B1E]">{summary.date}</h1>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-[#5B6B5D] hover:text-[#1C2B1E] underline"
-          >
-            Log out
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => router.push("/log")}
+              className="text-sm text-[#2F5233] font-medium hover:underline"
+            >
+              + Log food
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-sm text-[#5B6B5D] hover:text-[#1C2B1E] underline"
+            >
+              Log out
+            </button>
+          </div>
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-[#E7E2D6] p-6 flex justify-around">
@@ -128,6 +154,35 @@ export default function DashboardPage() {
             <p className="text-xs text-[#5B6B5D]">Fat</p>
             <p className="text-lg font-semibold text-[#1C2B1E]">{Math.round(summary.totals.fat)}g</p>
           </div>
+        </div>
+
+        <div className="mt-4 bg-white rounded-2xl shadow-sm border border-[#E7E2D6] p-5">
+          <p className="text-xs text-[#5B6B5D] mb-3">Today&apos;s food</p>
+          {todayLogs.length === 0 ? (
+            <p className="text-sm text-[#5B6B5D]">Nothing logged yet today.</p>
+          ) : (
+            <div className="space-y-2">
+              {todayLogs.map((log) => (
+                <div key={log.id} className="flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-[#1C2B1E] truncate">
+                      {log.servings}x {log.food_detail.name}
+                    </p>
+                    <p className="text-xs text-[#5B6B5D]">
+                      {Math.round(log.food_detail.calories * log.servings)} cal
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteLog(log.id)}
+                    className="text-xs text-[#B3401E] hover:underline shrink-0"
+                    aria-label={`Remove ${log.food_detail.name}`}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-4 bg-white rounded-2xl shadow-sm border border-[#E7E2D6] p-5">

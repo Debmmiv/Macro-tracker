@@ -1,5 +1,21 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
+export async function register(username: string, email: string, password: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/register/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, email, password }),
+  });
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    // DRF returns errors shaped like { "fieldname": ["message"] } - grab the first one
+    const firstError = Object.values(data)[0];
+    const message = Array.isArray(firstError) ? firstError[0] : "Couldn't create your account.";
+    throw new Error(message as string);
+  }
+}
+
 export async function login(username: string, password: string): Promise<string> {
   const res = await fetch(`${API_URL}/api-token-auth/`, {
     method: "POST",
@@ -79,6 +95,22 @@ async function authedPost(path: string, body: unknown) {
   return res.json();
 }
 
+async function authedDelete(path: string): Promise<void> {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    headers: { Authorization: `Token ${token}` },
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    throw new Error("Session expired");
+  }
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+}
+
 export function getDailySummary(): Promise<DailySummary> {
   return authedGet("/api/logs/summary/");
 }
@@ -95,6 +127,22 @@ export interface Food {
   protein: number;
   carbs: number;
   fat: number;
+}
+
+export interface TodayLogEntry {
+  id: number;
+  servings: number;
+  date: string;
+  food: number;
+  food_detail: Food;
+}
+
+export function getTodayLogs(): Promise<TodayLogEntry[]> {
+  return authedGet("/api/logs/today/");
+}
+
+export function deleteLog(logId: number): Promise<void> {
+  return authedDelete(`/api/logs/${logId}/`);
 }
 
 export function searchFoods(query: string): Promise<Food[]> {
