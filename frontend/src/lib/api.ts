@@ -102,6 +102,21 @@ export function searchFoods(query: string): Promise<Food[]> {
   return authedGet(`/api/foods/?search=${encodeURIComponent(query)}`);
 }
 
+export interface ExternalFood {
+  fdc_id: number;
+  name: string;
+  serving_size: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
+export function searchExternalFoods(query: string): Promise<ExternalFood[]> {
+  if (!query.trim()) return Promise.resolve([]);
+  return authedGet(`/api/foods/external-search/?q=${encodeURIComponent(query)}`);
+}
+
 export function createFood(food: Omit<Food, "id">): Promise<Food> {
   return authedPost("/api/foods/", food);
 }

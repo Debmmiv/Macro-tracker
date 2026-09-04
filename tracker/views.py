@@ -1,12 +1,80 @@
 from django.shortcuts import render
 from django.utils import timezone
-from rest_framework import viewsets, generics, filters
-from rest_framework.decorators import action
+from rest_framework import viewsets, generics, filters, status
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from .models import Food, DailyLog, Profile, WeightLog
 from .serializers import FoodSerializer, DailyLogSerializer, RegisterSerializer, ProfileSerializer, WeightLogSerializer
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.contrib.auth.models import User
+from decouple import config
+import requests
+
+
+class ExternalFoodSearchView(APIView):
+    """
+    GET /api/foods/external-search/?q=banana
+    Searches USDA FoodData Central for real foods, so users aren't stuck
+    typing nutrition facts by hand for every common food.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        query = request.query_params.get("q", "").strip()
+        if not query:
+            return Response([])
+
+        api_key = config("USDA_API_KEY", default="DEMO_KEY")
+
+        try:
+            resp = requests.get(
+                "https://api.nal.usda.gov/fdc/v1/foods/search",
+                params={
+                    "query": query,
+                    "pageSize": 10,
+                    # Foundation + SR Legacy = real analytical food data (raw/whole foods).
+                    # Excludes Branded (packaged products, too noisy) and Survey data.
+                    "dataType": "Foundation,SR Legacy",
+                    "api_key": api_key,
+                },
+                timeout=6,
+            )
+        except requests.RequestException:
+            return Response(
+                {"detail": "Couldn't reach the food database. Try again in a moment."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        if resp.status_code == 429:
+            return Response(
+                {"detail": "Food search rate limit hit. Try again shortly, or set up a free USDA_API_KEY."},
+                status=status.HTTP_429_TOO_MANY_REQUESTS,
+            )
+        if not resp.ok:
+            return Response(
+                {"detail": "Food database search failed."},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        results = []
+        for item in resp.json().get("foods", []):
+            nutrients = {n.get("nutrientName"): n.get("value", 0) for n in item.get("foodNutrients", [])}
+            calories = nutrients.get("Energy", 0)
+            # Analytical USDA data (Foundation/SR Legacy) is always per 100g.
+            results.append({
+                "fdc_id": item.get("fdcId"),
+                "name": item.get("description", "").title(),
+                "serving_size": "100g",
+                "calories": round(calories),
+                "protein": round(nutrients.get("Protein", 0), 1),
+                "carbs": round(nutrients.get("Carbohydrate, by difference", 0), 1),
+                "fat": round(nutrients.get("Total lipid (fat)", 0), 1),
+            })
+            if len(results) >= 8:
+                break
+
+        return Response(results)
 
 
 class FoodViewSet(viewsets.ModelViewSet):
