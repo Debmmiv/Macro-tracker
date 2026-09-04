@@ -22,7 +22,7 @@ export default function SignupPage() {
       // re-type the password they just typed thirty seconds ago.
       const token = await login(username, password);
       saveToken(token);
-      router.push("/");
+      router.push("/?onboarding=1");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't create your account. Try again.");
     } finally {

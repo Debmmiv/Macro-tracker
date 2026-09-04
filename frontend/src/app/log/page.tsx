@@ -3,6 +3,7 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { getToken, searchFoods, searchExternalFoods, logFood, createFood, Food, ExternalFood } from "@/lib/api";
+import BottomNav from "@/components/BottomNav";
 
 export default function LogFoodPage() {
   const router = useRouter();
@@ -30,24 +31,22 @@ export default function LogFoodPage() {
       }
       setSearching(true);
       setExternalSearchError(null);
-      searchFoods(query)
-        .then((localResults) => {
+
+      // Always run both searches in parallel so the user can always import
+      // new variations from USDA even if they've already imported one version.
+      Promise.all([
+        searchFoods(query).catch(() => [] as Food[]),
+        searchExternalFoods(query).catch(() => {
+          setExternalSearchError("Couldn't search the USDA database right now — you can still add this food manually.");
+          return [] as ExternalFood[];
+        }),
+      ])
+        .then(([localResults, apiResults]) => {
           setResults(localResults);
-          // Only hit USDA if nothing local matched - keeps things fast and
-          // prioritizes foods your own community already added.
-          if (localResults.length === 0) {
-            return searchExternalFoods(query)
-              .then(setExternalResults)
-              .catch(() => {
-                setExternalResults([]);
-                setExternalSearchError("Couldn't search the USDA database right now - you can still add this food manually.");
-              });
-          }
-          setExternalResults([]);
-        })
-        .catch(() => {
-          setResults([]);
-          setExternalResults([]);
+          // Filter out external results whose name already exists locally
+          // (case-insensitive) to avoid showing obvious duplicates.
+          const localNames = new Set(localResults.map((f) => f.name.toLowerCase()));
+          setExternalResults(apiResults.filter((f) => !localNames.has(f.name.toLowerCase())));
         })
         .finally(() => setSearching(false));
     }, 300); // debounce so we're not hitting the API on every keystroke
@@ -94,12 +93,6 @@ export default function LogFoodPage() {
       <div className="max-w-sm mx-auto px-4 pt-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl font-semibold text-[#1C2B1E]">Log food</h1>
-          <button
-            onClick={() => router.push("/")}
-            className="text-sm text-[#5B6B5D] hover:text-[#1C2B1E] underline"
-          >
-            Back to dashboard
-          </button>
         </div>
 
         <input
@@ -166,6 +159,7 @@ export default function LogFoodPage() {
           />
         )}
       </div>
+      <BottomNav active="log" />
     </main>
   );
 }

@@ -111,6 +111,28 @@ async function authedDelete(path: string): Promise<void> {
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
 }
 
+async function authedPatch(path: string, body: unknown) {
+  const token = getToken();
+  if (!token) throw new Error("Not authenticated");
+
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Token ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (res.status === 401) {
+    clearToken();
+    throw new Error("Session expired");
+  }
+  if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+
+  return res.json();
+}
+
 export function getDailySummary(): Promise<DailySummary> {
   return authedGet("/api/logs/summary/");
 }
@@ -171,4 +193,26 @@ export function createFood(food: Omit<Food, "id">): Promise<Food> {
 
 export function logFood(foodId: number, servings: number): Promise<unknown> {
   return authedPost("/api/logs/", { food: foodId, servings });
+}
+
+export interface Profile {
+  target_weight_kg: number | null;
+  daily_calorie_target: number | null;
+  daily_protein_target_g: number | null;
+  height_cm: number | null;
+  age: number | null;
+  sex: 'male' | 'female' | 'other' | null;
+  activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'athlete' | null;
+}
+
+export function getProfile(): Promise<Profile> {
+  return authedGet("/api/profile/");
+}
+
+export function updateProfile(data: Partial<Profile>): Promise<Profile> {
+  return authedPatch("/api/profile/", data);
+}
+
+export function logWeight(weight_kg: number): Promise<WeightEntry> {
+  return authedPost("/api/weights/", { weight_kg });
 }

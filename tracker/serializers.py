@@ -23,7 +23,10 @@ class DailyLogSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['target_weight_kg', 'daily_calorie_target', 'daily_protein_target_g']
+        fields = [
+            'target_weight_kg', 'daily_calorie_target', 'daily_protein_target_g',
+            'height_cm', 'age', 'sex', 'activity_level',
+        ]
 
 
 class WeightLogSerializer(serializers.ModelSerializer):

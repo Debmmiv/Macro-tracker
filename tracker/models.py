@@ -14,10 +14,24 @@ class Food(models.Model):
         return self.name
 
 class Profile(models.Model):
+    SEX_CHOICES = [('male', 'Male'), ('female', 'Female'), ('other', 'Other')]
+    ACTIVITY_CHOICES = [
+        ('sedentary', 'Sedentary'),
+        ('light', 'Lightly active'),
+        ('moderate', 'Moderately active'),
+        ('active', 'Very active'),
+        ('athlete', 'Athlete'),
+    ]
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     target_weight_kg = models.FloatField(null=True, blank=True)
     daily_calorie_target = models.FloatField(null=True, blank=True)
     daily_protein_target_g = models.FloatField(null=True, blank=True)
+    # Biometrics (used for BMI / TDEE-based goal recommendations)
+    height_cm = models.FloatField(null=True, blank=True)
+    age = models.IntegerField(null=True, blank=True)
+    sex = models.CharField(max_length=10, null=True, blank=True, choices=SEX_CHOICES)
+    activity_level = models.CharField(max_length=20, null=True, blank=True, choices=ACTIVITY_CHOICES)
 
     def __str__(self):
         return f"{self.user.username}'s profile"
