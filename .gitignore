@@ -13,10 +13,17 @@ staticfiles/
 # IDE files
 .vscode/
 .idea/
- 
+
 # Environment variables (never commit real secrets)
 .env
 # Node / Next.js frontend
 frontend/node_modules/
 frontend/.next/
 frontend/.env.local
+
+# Mobile / Expo
+mobile/node_modules/
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/.env*.local
