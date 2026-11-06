@@ -1,29 +1,4 @@
-# Python / Virtual Environment
-venv/
-__pycache__/
-*.py[cod]
-*$py.class
- 
-# Django local settings / database
-db.sqlite3
-*.sqlite3
-media/
-staticfiles/
- 
-# IDE files
-.vscode/
-.idea/
-
-# Environment variables (never commit real secrets)
+node_modules/
+.expo/
 .env
-# Node / Next.js frontend
-frontend/node_modules/
-frontend/.next/
-frontend/.env.local
-
-# Mobile / Expo
-mobile/node_modules/
-mobile/.expo/
-mobile/dist/
-mobile/web-build/
-mobile/.env*.local
+dist/

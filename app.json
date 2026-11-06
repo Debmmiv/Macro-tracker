@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "MacroTrack",
+    "slug": "macrotrack",
+    "scheme": "macrotrack",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.example.macrotrack"
+    },
+    "android": {
+      "package": "com.example.macrotrack"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar",
+      "expo-font"
+    ]
+  }
+}
