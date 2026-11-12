@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
+import { Logo } from '../../src/components/Logo';
 import { Card } from '../../src/components/Card';
 import { Button } from '../../src/components/Button';
 import { ProgressBar } from '../../src/components/ProgressBar';
@@ -29,8 +30,13 @@ export default function Home() {
 
   return (
     <Screen>
-      <Text style={type.small}>{firstName ? `Hi, ${firstName}` : 'Hi'}</Text>
-      <Text style={type.title}>Today</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View>
+          <Text style={type.small}>{firstName ? `Hi, ${firstName}` : 'Hi'}</Text>
+          <Text style={type.title}>Today</Text>
+        </View>
+        <Logo size={44} />
+      </View>
 
       <Card>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>

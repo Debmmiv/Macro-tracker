@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Text, View } from 'react-native';
 import { Link } from 'expo-router';
 import { Screen } from '../../src/components/Screen';
+import { Logo } from '../../src/components/Logo';
 import { Field } from '../../src/components/Field';
 import { Button } from '../../src/components/Button';
 import { useSession } from '../../src/context/SessionContext';
@@ -34,9 +35,10 @@ export default function Register() {
 
   return (
     <Screen style={{ paddingTop: 48 }}>
-      <View style={{ gap: 4, marginBottom: 16 }}>
+      <View style={{ alignItems: 'center', gap: 6, marginBottom: 16 }}>
+        <Logo size={72} style={{ marginBottom: 8 }} />
         <Text style={type.title}>Create your account</Text>
-        <Text style={type.small}>It takes about a minute to set your daily targets.</Text>
+        <Text style={[type.small, { textAlign: 'center' }]}>It takes about a minute to set your daily targets.</Text>
       </View>
       <View style={{ flexDirection: 'row' }}>
         <Field label="Full name" value={name} onChangeText={setName} autoComplete="name" />

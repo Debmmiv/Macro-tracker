@@ -6,12 +6,22 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1E1E1E"
+    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.example.macrotrack"
     },
     "android": {
-      "package": "com.example.macrotrack"
+      "package": "com.example.macrotrack",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1E1E1E"
+      }
     },
     "plugins": [
       "expo-router",

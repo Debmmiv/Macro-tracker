@@ -4,6 +4,7 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { SessionProvider, useSession } from '../src/context/SessionContext';
+import { Logo } from '../src/components/Logo';
 import { colors } from '../src/theme';
 
 function Gate() {
@@ -32,6 +33,7 @@ function Gate() {
       </Stack>
       {loading && (
         <View style={[StyleSheet.absoluteFill, styles.loading]}>
+          <Logo size={88} style={{ marginBottom: 24 }} />
           <ActivityIndicator size="large" color={colors.primary} />
         </View>
       )}
